@@ -25,6 +25,7 @@
 #'   If \code{""}, the log is printed to the console.
 #' @param batch.size Specifies size of batches.  A negative value
 #'   indicates no batching.
+#' @param forceAutoNumber Logical. When TRUE, auto numbering is applied to new records.
 #' @param ... Arguments to be passed to other methods.
 #'
 #' @details
@@ -65,7 +66,8 @@
 importRecords <- function(rcon, data,
                           overwriteBehavior=c('normal', 'overwrite'),
                           returnContent=c('count', 'ids', 'nothing'),
-                          returnData=FALSE, logfile="", ...) 
+                          returnData=FALSE, logfile="", ..., 
+                          forceAutoNumber = FALSE) 
 {
   UseMethod("importRecords")
 }
@@ -76,7 +78,8 @@ importRecords <- function(rcon, data,
 importRecords.redcapDbConnection <- function(rcon, data,
                                              overwriteBehavior=c('normal', 'overwrite'),
                                              returnContent=c('count', 'ids', 'nothing'),
-                                             returnData=FALSE, logfile="", ...){
+                                             returnData=FALSE, logfile="", ..., 
+                                             forceAutoNumber = FALSE){
   message("Please accept my apologies.  The importRecords method for redcapDbConnection objects\n",
           "has not yet been written.  Please consider using the API.")
 }
@@ -89,7 +92,8 @@ importRecords.redcapApiConnection <- function(rcon, data,
                                               returnContent = c('count', 'ids', 'nothing'),
                                               returnData = FALSE, logfile = "", 
                                               ...,
-                                              bundle = NULL, batch.size=-1)
+                                              bundle = NULL, batch.size=-1, 
+                                             forceAutoNumber = FALSE)
 {
   if (!is.na(match("proj", names(list(...)))))
   {
@@ -119,6 +123,10 @@ importRecords.redcapApiConnection <- function(rcon, data,
   
   checkmate::assert_logical(x = returnData,
                             len = 1,
+                            add = coll)
+  
+  checkmate::assert_logical(x = forceAutoNumber, 
+                            len = 1, 
                             add = coll)
   
   checkmate::assert_character(x = logfile,
@@ -280,14 +288,16 @@ importRecords.redcapApiConnection <- function(rcon, data,
                            data = data,
                            batch.size = batch.size,
                            overwriteBehavior = overwriteBehavior,
-                           returnContent = returnContent)
+                           returnContent = returnContent, 
+                           forceAutoNumber = forceAutoNumber)
   }
   else
   {
     import_records_unbatched(rcon = rcon,
                              data = data,
                              overwriteBehavior = overwriteBehavior,
-                             returnContent = returnContent)
+                             returnContent = returnContent, 
+                             forceAutoNumber = forceAutoNumber)
   }
 }
 
@@ -297,7 +307,8 @@ importRecords.redcapApiConnection <- function(rcon, data,
 
 import_records_batched <- function(rcon, data, batch.size, 
                                    overwriteBehavior,
-                                   returnContent)
+                                   returnContent, 
+                                   forceAutoNumber)
 {
   n.batch <- nrow(data) %/% batch.size + 1
   
@@ -336,6 +347,7 @@ import_records_batched <- function(rcon, data, batch.size,
                          overwriteBehavior = overwriteBehavior,
                          returnContent = returnContent,
                          returnFormat = 'csv', 
+                         forceAutoNumber = tolower(forceAutoNumber),
                          data = out[[i]]),
                config = rcon$config)
   }
@@ -378,6 +390,7 @@ import_records_unbatched <- function(rcon, data, overwriteBehavior,
                             type = 'flat', 
                             overwriteBehavior = overwriteBehavior,
                             returnContent = returnContent,
+                            forceAutoNumber = tolower(forceAutoNumber),
                             returnFormat = 'csv', 
                             dateFormat = "YMD",
                             data = out), 
